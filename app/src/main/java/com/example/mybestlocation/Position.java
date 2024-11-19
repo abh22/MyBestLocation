@@ -30,4 +30,16 @@ public class Position {
                 ", latitude='" + latitude + '\'' +
                 '}';
     }
+
+    public String getLatitude() {
+        return this.latitude;
+    }
+
+    public String getLongitude() {
+        return this.longitude;
+    }
+
+    public int getId() {
+        return this.id;
+    }
 }

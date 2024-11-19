@@ -15,4 +15,5 @@ public class Config {
         public static String url_add = "http://" + IP + "/servicephp/add.php";
 
 
+        public static String url_delete="http://" + IP + "/servicephp/delete.php";
 }

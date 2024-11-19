@@ -37,23 +37,27 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private GoogleMap mMap;
     private LocationManager locationManager;
     private LatLng selectedLocation;
+    // to check if a specific location was passed from HomeFragment
+    private boolean isSpecificLocationPassed = false;
     private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-            selectedLocation = currentLatLng;
+            if (!isSpecificLocationPassed) {
+                LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                selectedLocation = currentLatLng;
 
-            // Clear any existing markers and add new one
-            mMap.clear();
-            mMap.addMarker(new MarkerOptions()
-                    .position(currentLatLng)
-                    .title(getAddressFromLocation(currentLatLng)));
+                // Clear any existing markers and add new one
+                mMap.clear();
+                mMap.addMarker(new MarkerOptions()
+                        .position(currentLatLng)
+                        .title(getAddressFromLocation(currentLatLng)));
 
-            // Move camera to current location
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
+                // Move camera to current location
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
 
-            // Stop location updates after getting the first location
-            locationManager.removeUpdates(this);
+                // Stop location updates after getting the first location
+                locationManager.removeUpdates(this);
+            }
         }
 
         @Override
@@ -74,7 +78,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         // Initialize location manager
         locationManager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+        // NEW: Check if a specific location was passed from HomeFragment
+        if (getArguments() != null) {
+            double latitude = getArguments().getDouble("latitude", 0);
+            double longitude = getArguments().getDouble("longitude", 0);
 
+            // If valid coordinates were passed, set the specific location flag
+            if (latitude != 0 && longitude != 0) {
+                isSpecificLocationPassed = true;
+                selectedLocation = new LatLng(latitude, longitude);
+            }
+        }
         // Initialize map
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
                 .findFragmentById(R.id.map);
@@ -120,12 +134,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mMap = googleMap;
         mMap.getUiSettings().setZoomControlsEnabled(true);
 
-        // Check for location permission
-        if (hasLocationPermission()) {
-            enableMyLocation();
+        // NEW: If a specific location was passed, show its marker
+        if (isSpecificLocationPassed && selectedLocation != null) {
+            mMap.clear();
+            mMap.addMarker(new MarkerOptions()
+                    .position(selectedLocation)
+                    .title(getAddressFromLocation(selectedLocation)));
+// Move camera to the specific location
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(selectedLocation, 15f));
         } else {
-            requestLocationPermission();
+            // Existing location permission and current location logic
+            if (hasLocationPermission()) {
+                enableMyLocation();
+            } else {
+                requestLocationPermission();
+            }
         }
+
+
 
         // Set up map click listener for when user wants to change location
         mMap.setOnMapClickListener(latLng -> {
